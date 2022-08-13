@@ -1,4 +1,4 @@
-# assignment_2_Machine_learning
+# luchtfoto classification
 This is a basic image classification program, for complex image object segmentation. This program is part of the Project: Enrich the 3DBAG with the “material type” for each surface.
 
 ## Basic Info
