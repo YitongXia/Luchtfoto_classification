@@ -15,12 +15,26 @@ import rasterio.warp
 # @ use rasterio to read and store the image
 # @ return
 # @ numpy array with every band of the image
-def read_raster(file_name):
+def read_single_raster(file_name):
     with rasterio.open(file_name) as dataset:
         image_band = []
         for i in range(len(dataset.indexes)):
             image_band.append(dataset.read(1))
     return image_band
+
+
+def read_raster_folder(input_folder):
+    # function to read the file and give the info needed
+    # input_folder = os.getcwd() + r"..\dataset\segmentation"
+    print("activate data folder: ")
+    print(input_folder)
+
+    raster_collection = []
+    # loop trough files and retreive objects info as well as loose point info for output
+    for file in os.listdir(input_folder):
+        raster_collection.append(read_single_raster(file))
+    return raster_collection
+
 
 
 # @ auto classification for each rooftop
@@ -30,7 +44,7 @@ def read_raster(file_name):
 def single_classification(file_name):
 
     roof = []
-    roof = read_raster(file_name)
+    roof = read_single_raster(file_name)
     # for band in range(len(roof)):
     X = roof[0].flatten()
     Y = roof[1].flatten()
@@ -54,9 +68,6 @@ def single_classification(file_name):
     ax.set_ylabel("G")
     ax.set_zlabel("B")
     plt.show()
-
-
-
 
 
 # function to read the file and give the info needed
@@ -123,4 +134,7 @@ def dbscan(X, Y, Z, roofs_rgb):
 
 if __name__ == '__main__':
     file_name = r"..\dataset" + r"\amsterdam.tif"
+
+    input_folder = os.getcwd() + r"..\dataset\segmentation"
+
     read_raster(file_name)
