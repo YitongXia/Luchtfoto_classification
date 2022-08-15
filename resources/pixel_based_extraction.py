@@ -87,41 +87,63 @@ def single_classification(file_name, n_cluster):
             Y.append(Y_old[i])
             Z.append(Z_old[i])
 
-    print("the number of valid pixel is ",len(X))
+    print("the number of valid pixel is ", len(X))
     # clean no_data value (as 256)
     y_pred = KMeans(n_clusters=n_cluster, random_state=5).fit_predict(roof_rgb)
     # draw_plot(X,Y,Z,y_pred)
 
-    a1 = 0
-    a2 = 0
-    a3 = 0
-    cluster = 0
+    vote = []
+    for i in range(n_cluster):
+        vote.append(0)
+
     for item in y_pred:
-        if item == 1:
-            a1 += 1
-        elif item == 2:
-            a2 += 1
-        elif item == 3:
-            a3 += 1
+        vote[item - 1] += 1
 
-    if a1 >= a2:
-        cluster = 1 if a1 >= a3 else 2
+    cluster_1 = 0
+
+    for i in range(len(vote)):
+        if vote[i] > vote[cluster_1]:
+            cluster_1 = i
+
+    cluster_2 = 0
+    if cluster_1 == 0:
+        cluster_2 = 1
     else:
-        cluster = 2 if a2 >= a3 else 3
+        cluster_2 = 0
 
-    print("the main cluster is ", cluster)
+    for i in range(len(vote)):
+        if vote[i] > vote[cluster_2]:
+            if vote[i] != vote[cluster_1]:
+                cluster_2 = i
+
+    print("the main cluster is: ", cluster_1)
+    print("the second cluster is: ", cluster_2)
+
     majority_pixel = [0, 0, 0]
-    count=0
+    count = 0
     for i in range(len(y_pred)):
-        if y_pred[i] == cluster:
+        if y_pred[i] == cluster_1:
             majority_pixel[0] += X[i]
             majority_pixel[1] += Y[i]
             majority_pixel[2] += Z[i]
-            count+=1
+            count += 1
     majority_pixel = [majority_pixel[0] / count,
                       majority_pixel[1] / count,
                       majority_pixel[2] / count]
-    return majority_pixel
+
+    second_majority_pixel = [0, 0, 0]
+    count = 0
+    for i in range(len(y_pred)):
+        if y_pred[i] == cluster_2:
+            second_majority_pixel[0] += X[i]
+            second_majority_pixel[1] += Y[i]
+            second_majority_pixel[2] += Z[i]
+            count += 1
+    second_majority_pixel = [second_majority_pixel[0] / count,
+                             second_majority_pixel[1] / count,
+                             second_majority_pixel[2] / count]
+
+    return majority_pixel, second_majority_pixel
 
 
 # function to read the file and give the info needed
@@ -161,9 +183,10 @@ def dbscan(X, Y, Z, roofs_rgb):
 
 
 if __name__ == '__main__':
-    file_name = r"..\dataset\segmentation" + r"\2.tif"
+    file_name = r"..\dataset\segmentation" + r"\15_tile.tif"
 
     input_folder = os.getcwd() + r"..\dataset\segmentation"
 
-    major = single_classification(file_name, 5)
-    print(major)
+    major, second_major= single_classification(file_name, 6)
+    print("the first color is: ",major)
+    print("the second color is: ",second_major)
