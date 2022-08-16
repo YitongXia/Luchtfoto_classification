@@ -24,9 +24,9 @@ def read_single_raster(filename):
 
 
 # --*** read images ***----
-# @ use rasterio to read and store the image
-# @ return
-# @ numpy array with every band of the image
+# use rasterio to read and store the image
+# return
+# numpy array with every band of the image
 
 def read_multiple_raster(input_folder):
     # function to read the file and give the info needed
@@ -43,6 +43,10 @@ def read_multiple_raster(input_folder):
     return raster_collection
 
 
+# function to apply k-means clustering on multiple roofs, and draw the plot.
+# input: the folder name of the input raster, the number of the clustering.
+# output: classification result and plot.
+
 def multiple_raster_kmeans(raster_collection, n_cluster):
 
     roof_rgb = []
@@ -57,7 +61,31 @@ def multiple_raster_kmeans(raster_collection, n_cluster):
     Z = roof_rgb[:, 2]
 
     y_pred = KMeans(n_clusters=n_cluster, random_state=5).fit_predict(roof_rgb)
+
+    input_folder = r"..\dataset\segmentation"
+    evaluation(y_pred,input_folder,n_cluster)
     draw_plot(X, Y, Z, y_pred)
+
+
+# just a test function
+# function to apply k-means clustering, and draw the plot.
+# input: array of pixel values of roof.
+# output: classification result and plot.
+
+def multiple_raster_DBSCAN(raster_collection, esp):
+
+    roof_rgb = []
+    for raster in raster_collection:
+        majority_pixel, second_majority_pixel=single_classification(raster, 6)
+        roof_rgb.append(majority_pixel)
+
+    roof_rgb = np.array(roof_rgb)
+
+    X = roof_rgb[:, 0]
+    Y = roof_rgb[:, 1]
+    Z = roof_rgb[:, 2]
+
+    y_pred = DBSCAN(eps=esp, min_samples=15).fit_predict(roof_rgb)
 
 
 # plot the classification result in 3D space based on spectral features
@@ -81,7 +109,7 @@ def draw_plot(X, Y, Z, y_pred):
 
 
 # auto classification for each rooftop
-# input:tif file of each rooftop
+# input:tif file of each rooftop, and the number of clustering
 # output: (R,G,B) spectral feature of the rooftop
 
 def single_classification_from_file(file_name, n_cluster):
@@ -132,9 +160,6 @@ def single_classification_from_file(file_name, n_cluster):
             if vote[i] != vote[cluster_1]:
                 cluster_2 = i
 
-    print("the main cluster is: ", cluster_1)
-    print("the second cluster is: ", cluster_2)
-
     majority_pixel = [0, 0, 0]
     count = 0
     for i in range(len(y_pred)):
@@ -160,7 +185,6 @@ def single_classification_from_file(file_name, n_cluster):
                              second_majority_pixel[2] / count]
 
     return majority_pixel, second_majority_pixel
-
 
 def single_classification(roof, n_cluster):
 
@@ -208,9 +232,6 @@ def single_classification(roof, n_cluster):
             if vote[i] != vote[cluster_1]:
                 cluster_2 = i
 
-    print("the main cluster is: ", cluster_1)
-    print("the second cluster is: ", cluster_2)
-
     majority_pixel = [0, 0, 0]
     count = 0
     for i in range(len(y_pred)):
@@ -237,6 +258,7 @@ def single_classification(roof, n_cluster):
 
     return majority_pixel, second_majority_pixel
 
+
 # function to read the file and give the info needed
 # return:
 # the array of the RGB value of all the roofs
@@ -257,15 +279,21 @@ def read(file_route):
     return roofs_gid, roofs_rgb
 
 
-def kmeans(roofs_rgb):
+# function to apply k-means clustering, and draw the plot.
+# input: array of pixel values of roof.
+# output: classification result and plot.
+def kmeans(roofs_rgb,n_cluster):
     roofs_rgb = np.array(roofs_rgb)
     X = roofs_rgb[:, 0]
     Y = roofs_rgb[:, 1]
     Z = roofs_rgb[:, 2]
-    y_pred = KMeans(n_clusters=3, random_state=5).fit_predict(roofs_rgb)
+    y_pred = KMeans(n_clusters=n_cluster, random_state=5).fit_predict(roofs_rgb)
     draw_plot(X, Y, Z, y_pred)
 
 
+# function to apply DBSCAN clustering, and draw the plot.
+# input: array of pixel values of roof.
+# output: classification result and plot.
 def dbscan(roofs_rgb):
     roofs_rgb = np.array(roofs_rgb)
     X = roofs_rgb[:, 0]
@@ -275,14 +303,32 @@ def dbscan(roofs_rgb):
     draw_plot(X, Y, Z, y_pred)
 
 
-if __name__ == '__main__':
-    file_name = r"..\dataset\segmentation" + r"\16_tile.tif"
+# this function is to evaluate the clustering result
+# compare with the ground truth label
+def evaluation(y_pred, input_folder,n_cluster):
+    file_name = []
+    for file in os.listdir(input_folder):
+        file_name.append(file)
+    # for i in range(len(y_pred)):
+    #     print("this is {}, the file name is {}".format(y_pred[i], file_name[i]))
 
+    for i in range(n_cluster):
+        for j in range(len(y_pred)):
+            if i == y_pred[j]:
+                print("the clustering result is {}, and the file name is {}".format(y_pred[j], file_name[j]))
+
+
+if __name__ == '__main__':
+    # file name (for testing)
+    file_name = r"..\dataset\segmentation" + r"\2_solar.tif"
+
+    # folder name of the input roof images
     input_folder = r"..\dataset\segmentation"
 
-    # major, second_major = single_classification(file_name, 7)
+    raster_collection = read_multiple_raster(input_folder)
+    multiple_raster_kmeans(raster_collection, 7)
+    print("the clustering process is finished.")
+
+    # major, second_major = single_classification_from_file(file_name, 6)
     # print("the first color is: ", major)
     # print("the second color is: ", second_major)
-
-    raster_collection = read_multiple_raster(input_folder)
-    multiple_raster_kmeans(raster_collection, 3)
