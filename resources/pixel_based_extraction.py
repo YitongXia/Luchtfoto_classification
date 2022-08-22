@@ -43,6 +43,7 @@ def read_multiple_raster(input_folder):
         file_name = r"..\dataset\segmentation" + "\\" + file
         print("reading file: " + file_name)
         raster_collection.append(read_single_raster(file_name))
+
     return raster_collection
 
 
@@ -375,7 +376,8 @@ def draw_2D_plot(raster_collection):
     Y = roof_rgb[:, 1]
     Z = roof_rgb[:, 2]
 
-    plt.scatter(X,Y)
+    plt.scatter(Y,Z)
+    plt.show()
 
 
 
@@ -410,14 +412,15 @@ if __name__ == '__main__':
     file_name = r"..\dataset\segmentation" + r"\1_black.tif"
 
     # folder name of the input roof images
-    input_folder = r"..\dataset\segmentation"
-
-    # raster_collection = read_multiple_raster(input_folder)
-    # draw_2D_plot(raster_collection)
+    input_folder = r"..\dataset\segmentation1"
 
     raster_collection = read_multiple_raster(input_folder)
-    multiple_raster_kmeans(raster_collection, 7)
-    print("the clustering process is finished.")
+    draw_2D_plot(raster_collection)
+
+    # raster_collection = read_multiple_raster(input_folder)
+    # print("start to compute now:")
+    # multiple_raster_kmeans(raster_collection, 7)
+    # print("the clustering process is finished.")
 
     # major, second_major = single_classification_from_file(file_name, 6)
     # print("the first color is: ", major)
