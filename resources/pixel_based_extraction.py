@@ -6,6 +6,9 @@ from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 from sklearn import datasets
 
+from skimage.color import rgb2gray
+import skimage.io as skio
+
 import rasterio
 import rasterio.features
 import rasterio.warp
@@ -318,12 +321,99 @@ def evaluation(y_pred, input_folder,n_cluster):
                 print("the clustering result is {}, and the file name is {}".format(y_pred[j], file_name[j]))
 
 
+def RGB_difference(file_name):
+
+    roof = []
+    roof = read_single_raster(file_name)
+
+    X_old = roof[0].flatten()
+    Y_old = roof[1].flatten()
+    Z_old = roof[2].flatten()
+    roof_rgb = []
+    for i in range(len(X_old)):
+        if X_old[i] == 256 & Y_old[i] == 256 & Z_old[i] == 256:
+            continue
+        else:
+            roof_rgb.append([X_old[i], Y_old[i], Z_old[i]])
+
+    roof_rgb = np.array(roof_rgb)
+
+    R = roof_rgb[:, 0]
+    G = roof_rgb[:, 1]
+    B = roof_rgb[:, 2]
+
+    GR_m = []
+    GB_m = []
+
+    for m in range(len(R)):
+        if G[m] >= R[m]:
+            GR_m.append(G[m] - R[m])
+        else:
+            temp = R[m] - G[m]
+            GR_m.append(-int(temp))
+
+        if G[m] >= B[m]:
+            GB_m.append(G[m] - B[m])
+        else:
+            temp = B[m] - G[m]
+            GB_m.append(-int(temp))
+
+    plt.scatter(GR_m, GB_m)
+    plt.show()
+
+
+def draw_2D_plot(raster_collection):
+
+    roof_rgb = []
+    for raster in raster_collection:
+        majority_pixel, second_majority_pixel=single_classification(raster, 6)
+        roof_rgb.append(majority_pixel)
+
+    roof_rgb = np.array(roof_rgb)
+
+    X = roof_rgb[:, 0]
+    Y = roof_rgb[:, 1]
+    Z = roof_rgb[:, 2]
+
+    plt.scatter(X,Y)
+
+
+
+def grayscale(file_name):
+    # Importing Necessary Libraries
+
+    skio.use_plugin("tifffile")
+    tif = skio.imread(fname=file_name, plugin="tifffile")
+
+    # Setting the plot size to 15,15
+    plt.figure(figsize=(15, 15))
+
+    plt.subplot(1, 2, 1)
+
+    # Displaying the sample image
+    plt.imshow(tif)
+
+    # Converting RGB image to Monochrome
+    gray_coffee = rgb2gray(tif)
+    plt.subplot(1, 2, 2)
+
+    # Displaying the sample image - Monochrome
+    # Format
+    plt.imshow(gray_coffee, cmap="gray")
+
+
+
+
+
 if __name__ == '__main__':
     # file name (for testing)
-    file_name = r"..\dataset\segmentation" + r"\2_solar.tif"
+    file_name = r"..\dataset\segmentation" + r"\1_black.tif"
 
     # folder name of the input roof images
     input_folder = r"..\dataset\segmentation"
+
+    # raster_collection = read_multiple_raster(input_folder)
+    # draw_2D_plot(raster_collection)
 
     raster_collection = read_multiple_raster(input_folder)
     multiple_raster_kmeans(raster_collection, 7)
